@@ -1,34 +1,22 @@
-bool isBeautiful(int count[10]) {
-    for (int d = 1; d <= 7; d++) {
-        if (count[d] != 0 && count[d] != d) return false;
+#define COUNTS_SIZE 10
+
+int counts[COUNTS_SIZE];
+
+bool is_numerically_balanced(int n) {
+    memset(counts, 0, sizeof(counts));
+    while (n > 0) {
+        counts[n % 10]++;
+        n /= 10;
+    }
+    for (int i = 0; i < COUNTS_SIZE; i++) {
+        if (counts[i] != 0 && counts[i] != i) {
+            return false;
+        }
     }
     return true;
 }
 
-void generate(long num, int count[10], int *res, int *resSize) {
-    if (num > 0 && isBeautiful(count)) {
-        res[(*resSize)++] = (int) num;
-    }
-    if (num > 1224444) return;
-
-    for (int d = 1; d <= 7; d++) {
-        if (count[d] < d) {
-            count[d]++;
-            generate(num * 10 + d, count, res, resSize);
-            count[d]--;
-        }
-    }
-}
-
 int nextBeautifulNumber(int n) {
-    int res[2000];
-    int resSize = 0;
-    int count[10] = {0};
-    generate(0, count, res, &resSize);
-
-    int ans = -1;
-    for (int i = 0; i < resSize; i++) {
-        if (res[i] > n && (ans == -1 || res[i] < ans)) ans = res[i];
-    }
-    return ans;
+    while (!is_numerically_balanced(++n));
+    return n;
 }
