@@ -4,7 +4,7 @@ int strStr(char* haystack, char* needle) {
 
     if (s == 0) return 0; 
 
-    for(i=0;i<=n;i++){
+    for(i=0;i<=n-s;i++){
         for (j = 0; j < s; j++) {
             if (haystack[i + j] != needle[j]) break;
         }
