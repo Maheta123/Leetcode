@@ -1,42 +1,59 @@
-class Solution:
-    def dfs(self, r, c, dir, vis, mp):
-        n, m = len(vis), len(vis[0])
-        if r < 0 or c < 0 or r >= n or c >= m:
-            return
-        if (r, c) in mp:
-            return
-        vis[r][c] = 1
-
-        if dir == "r":
-            self.dfs(r, c + 1, "r", vis, mp)
-        if dir == "l":
-            self.dfs(r, c - 1, "l", vis, mp)
-        if dir == "u":
-            self.dfs(r - 1, c, "u", vis, mp)
-        if dir == "d":
-            self.dfs(r + 1, c, "d", vis, mp)
-
+class Solution(object):
     def countUnguarded(self, m, n, guards, walls):
-        vis = [[0] * n for _ in range(m)]
-        mp = {}
+        """
+        :type m: int
+        :type n: int
+        :type guards: List[List[int]]
+        :type walls: List[List[int]]
+        :rtype: int
+        """
+        # Faster grid creation
+        arr = [[1] * n for _ in range(m)]
 
-        for r, c in guards:
-            mp[(r, c)] = 1
-            vis[r][c] = 1
+        # Mark walls
+        for row, col in walls:
+            arr[row][col] = -1
 
-        for r, c in walls:
-            mp[(r, c)] = 1
-            vis[r][c] = 1
+        # Mark guards
+        for row, col in guards:
+            arr[row][col] = -2   # use -2 for guards so they also block vision
 
-        for r, c in guards:
-            self.dfs(r, c + 1, "r", vis, mp)
-            self.dfs(r, c - 1, "l", vis, mp)
-            self.dfs(r + 1, c, "d", vis, mp)
-            self.dfs(r - 1, c, "u", vis, mp)
+        # Process each guard (your structure stays the same)
+        for row, col in guards:
 
-        cnt = 0
+            # UP
+            temp_row = row - 1
+            while temp_row >= 0 and arr[temp_row][col] != -1 and arr[temp_row][col] != -2:
+                if arr[temp_row][col] == 1:  # only mark if still unguarded
+                    arr[temp_row][col] = 0
+                temp_row -= 1
+
+            # DOWN
+            temp_row = row + 1
+            while temp_row < m and arr[temp_row][col] != -1 and arr[temp_row][col] != -2:
+                if arr[temp_row][col] == 1:
+                    arr[temp_row][col] = 0
+                temp_row += 1
+
+            # LEFT
+            temp_col = col - 1
+            while temp_col >= 0 and arr[row][temp_col] != -1 and arr[row][temp_col] != -2:
+                if arr[row][temp_col] == 1:
+                    arr[row][temp_col] = 0
+                temp_col -= 1
+
+            # RIGHT
+            temp_col = col + 1
+            while temp_col < n and arr[row][temp_col] != -1 and arr[row][temp_col] != -2:
+                if arr[row][temp_col] == 1:
+                    arr[row][temp_col] = 0
+                temp_col += 1
+
+        # Count unguarded cells
+        counter = 0
         for i in range(m):
             for j in range(n):
-                if vis[i][j] == 0:
-                    cnt += 1
-        return cnt
+                if arr[i][j] == 1:
+                    counter += 1
+
+        return counter
