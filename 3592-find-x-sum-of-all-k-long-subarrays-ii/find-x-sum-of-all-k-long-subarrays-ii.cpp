@@ -1,116 +1,123 @@
+struct Count {
+    int number, order, count;
+    Count(int number, int order, int count) : number(number), order(order), count(count) {}
+};
+
+struct Compare1 {
+    bool operator()(Count& c1, Count& c2) {
+        if (c1.count != c2.count) {
+            return c1.count > c2.count;
+        }
+        return c1.order > c2.order;
+    }
+};
+
+struct Compare2 {
+    bool operator()(Count& c1, Count& c2) {
+        if (c1.count != c2.count) {
+            return c1.count < c2.count;
+        }
+        return c1.order < c2.order;
+    }
+};
+
 class Solution {
 public:
-    vector<long long> findXSum(vector<int>& nums, int k, int X) {
-        int n = nums.size();
-        multiset<pair<long long,int>> mn; // multiset to store remaining elements
-        multiset<pair<long long,int>> mx; // multiset to store top x elements and keep track of sum
-        
-        int i=0;
-        int j= i+k-1;
-        
-        unordered_map<int,long long> f;
-        vector<long long> ans;
-        
-        for(int _ = 0; _ < j; _++)
-        {
-            f[nums[_]]+=1;
+    vector<long long> findXSum(vector<int>& numbers, int k, int x) {
+        int size_n = numbers.size();
+        pair<int, int> numbers_sorted[size_n];
+        for (int index = 0; index < size_n; index++) {
+            numbers_sorted[index].first = index, numbers_sorted[index].second = numbers[index];
         }
-        
-        long long s = 0;
-        for(auto x: f)
-        {
-            mx.insert({x.second, x.first});
-            s+= (x.second* x.first);
+        sort(&numbers_sorted[0], &numbers_sorted[0] + size_n, [&](pair<int, int>& n1, pair<int, int>& n2) {
+            return n1.second < n2.second;
+        });
+        int orders[size_n];
+        orders[numbers_sorted[0].first] = 0;
+        int order = 0;
+        for (int index = 1; index < size_n; index++) {
+            order += (numbers_sorted[index - 1].second != numbers_sorted[index].second), orders[numbers_sorted[index].first] = order;
         }
-        
-        while (mx.size() > X)
-        {
-            mn.insert(*mx.begin());
-            s-= mx.begin()->first * mx.begin()->second;
-            mx.erase(mx.begin());
+        int size_c = order + 1;
+        int counts[size_c];
+        memset(&counts, 0, sizeof(counts));
+        vector<bool> in_heap(order + 1, false);
+        priority_queue<Count, vector<Count>, Compare1> heap1; // first = order, second = frequency
+        priority_queue<Count, vector<Count>, Compare2> heap2; // first = order, second = frequency
+        long long sum = 0ll;
+        for (int index = 0; index < k; index++) {
+            int number = numbers[index], order = orders[index];
+            ++counts[order];
+            if (in_heap[order]) {
+                sum += static_cast<long long>(number), heap1.push({number, order, counts[order]});
+            } else {
+                heap2.push({number, order, counts[order]});
+            }
+            while (!heap1.empty() && (!in_heap[heap1.top().order] || counts[heap1.top().order] != heap1.top().count)) {
+                heap1.pop();
+            }
+            while (!heap2.empty() && (in_heap[heap2.top().order] || counts[heap2.top().order] != heap2.top().count)) {
+                heap2.pop();
+            }
+            if (heap2.empty()) {
+                continue;
+            }
+            if (x > 0) {
+                Count top2 = heap2.top();
+                heap1.push(top2), in_heap[top2.order] = true, --x, sum += static_cast<long long>(top2.number) * static_cast<long long>(top2.count);
+            } else {
+                Count top1 = heap1.top(), top2 = heap2.top();
+                if (top1.count < top2.count || (top1.count == top2.count && top1.order < top2.order)) {
+                    heap1.pop(), heap1.push(top2), heap2.pop(), heap2.push(top1), in_heap[top1.order] = false, in_heap[top2.order] = true, sum = sum - static_cast<long long>(top1.number) * static_cast<long long>(top1.count) + static_cast<long long>(top2.number) * static_cast<long long>(top2.count);
+                }
+            }
         }
-        
-        // cout<<s<<endl;
-        
-        while(j<n)
-        {   
-            if (mx.count({f[nums[j]], nums[j]}))
-            {
-                mx.erase(mx.find({f[nums[j]], nums[j]}));
-                s-= nums[j] * f[nums[j]];
+        int size_r = size_n - k + 1;
+        vector<long long> result(size_r);
+        result[0] = sum;
+        for (int index = k; index < size_n; index++) {
+            int number1 = numbers[index - k], order1 = orders[index - k], number2 = numbers[index], order2 = orders[index];
+            if (number1 == number2) {
+                result[index - k + 1] = sum;
+                continue;
             }
-            
-            
-            if (mn.count({f[nums[j]], nums[j]}))
-                mn.erase(mn.find({f[nums[j]], nums[j]}));
-            
-            f[nums[j]]+=1;
-            
-            if (f[nums[j]] >= mx.begin()->first)
-            {
-                s+= nums[j] * f[nums[j]];
-                mx.insert({f[nums[j]], nums[j]});
-                
-                mn.insert(*mx.begin());
-                s-= (mx.begin()->first * mx.begin()->second);
-                mx.erase(mx.begin());
+            --counts[order1], ++counts[order2];
+            if (in_heap[order1]) {
+                sum -= static_cast<long long>(number1);
+                if (counts[order1] != 0) {
+                    heap1.push({number1, order1, counts[order1]});
+                } else {
+                    ++x, in_heap[order1] = false;
+                }
+            } else {
+                heap2.push({number1, order1, counts[order1]});
             }
-            else
-            {
-                mn.insert({f[nums[j]], nums[j]});
+            if (in_heap[order2]) {
+                sum += static_cast<long long>(number2), heap1.push({number2, order2, counts[order2]});
+            } else {
+                heap2.push({number2, order2, counts[order2]});
             }
-            
-            // cout<<s<<endl;
-            
-            if (mx.size() < X)
-            {
-                s+= mn.rbegin()-> first * mn.rbegin()->second;
-                mx.insert(*mn.rbegin());
-                mn.erase(mn.find(*mn.rbegin()));
-                
+            while (!heap1.empty() && (!in_heap[heap1.top().order] || counts[heap1.top().order] != heap1.top().count)) {
+                heap1.pop();
             }
-            
-            ans.push_back(s);
-            
-            if (mx.count({f[nums[i]], nums[i]}))
-            {
-                mx.erase(mx.find({f[nums[i]], nums[i]}));
-                s-= nums[i] * f[nums[i]];
+            while (!heap2.empty() && (in_heap[heap2.top().order] || counts[heap2.top().order] != heap2.top().count)) {
+                heap2.pop();
             }
-            
-            if (mn.count({f[nums[i]], nums[i]}))
-                mn.erase(mn.find({f[nums[i]], nums[i]}));
-            
-            
-            f[nums[i]]-=1;
-            
-            
-            if (f[nums[i]] >= mx.begin()->first)
-            {
-                s+= nums[i] * f[nums[i]];
-                mx.insert({f[nums[i]], nums[i]});
-                
-                mn.insert(*mx.begin());
-                s-= (mx.begin()->first * mx.begin()->second);
-                mx.erase(mx.begin());
+            if (heap2.empty()) {
+                result[index - k + 1] = sum;
+                continue;
             }
-            else
-            {
-                mn.insert({f[nums[i]], nums[i]});
+            if (x > 0) {
+                Count top2 = heap2.top();
+                heap1.push(top2), heap2.pop(), in_heap[top2.order] = true, --x, sum += static_cast<long long>(top2.number) * static_cast<long long>(top2.count);
+            } else {
+                Count top1 = heap1.top(), top2 = heap2.top();
+                if (top1.count < top2.count || (top1.count == top2.count && top1.order < top2.order)) {
+                    heap1.pop(), heap1.push(top2), heap2.pop(), heap2.push(top1), in_heap[top1.order] = false, in_heap[top2.order] = true, sum = sum - static_cast<long long>(top1.number) * static_cast<long long>(top1.count) + static_cast<long long>(top2.number) * static_cast<long long>(top2.count);
+                }
             }
-            
-            if (mx.size() < X)
-            {
-                s+= mn.rbegin()-> first * mn.rbegin()->second;
-                mx.insert(*mn.rbegin());
-                mn.erase(mn.find(*mn.rbegin()));
-            }
-            
-            i+=1;
-            j+=1;
-            
+            result[index - k + 1] = sum;
         }
-        
-        return ans;
+        return result;
     }
 };
