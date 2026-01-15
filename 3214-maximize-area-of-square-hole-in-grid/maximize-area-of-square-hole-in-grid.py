@@ -1,18 +1,41 @@
+
 class Solution(object):
     def maximizeSquareHoleArea(self, n, m, hBars, vBars):
-        def longest_consecutive(bars):
-            bars.sort()
-            longest = curr = 1
-            for i in range(1, len(bars)):
-                if bars[i] == bars[i - 1] + 1:
-                    curr += 1
-                else:
-                    curr = 1
-                longest = max(longest, curr)
-            return longest
+        """
+        :type n: int
+        :type m: int
+        :type hBars: List[int]
+        :type vBars: List[int]
+        :rtype: int
+        """
+        hBars.sort()
+        vBars.sort()
+        hdiff=0
+        vdiff=0
+        count=0
+        i=0
+        j=0
+        while i<(len(hBars)-1): 
+            if hBars[i]+1==hBars[i+1]:
+                count+=1
+                i+=1
+            else:
+                hdiff=max(hdiff,count)
+                count=0
+                i+=1
+        hdiff=max(hdiff,count)
+        count=0
+        while j<(len(vBars)-1): 
+            if vBars[j]+1==vBars[j+1]:
+                count+=1
+                j+=1
+            else:
+                vdiff=max(vdiff,count)
+                count=0
+                j+=1
+        vdiff=max(vdiff,count)
+        
+        x=min(vdiff,hdiff)
 
-        max_h = longest_consecutive(hBars) + 1
-        max_v = longest_consecutive(vBars) + 1
-
-        side = min(max_h, max_v)
-        return side * side
+        return (x+2)**2
+            
