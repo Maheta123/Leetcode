@@ -2,16 +2,23 @@
  * Note: The returned array must be malloced, assume caller calls free().
  */
 int* constructTransformedArray(int* nums, int numsSize, int* returnSize) {
-    int n = numsSize;
-    int* res = (int*)malloc(sizeof(int) * n);
-    *returnSize = n;
+    *returnSize = numsSize;
+    
+    int* result = (int*)malloc(numsSize * sizeof(int));
 
-    for (int i = 0; i < n; i++) {
-        long long j = (long long)i + nums[i];
-        j %= n;
-        if (j < 0) 
-            j += n;
-        res[i] = nums[(int)j];
+    for (int i = 0; i < numsSize; i++) {
+        if (nums[i] == 0) {
+            result[i] = 0;
+        } else {
+            int newIndex = (i + nums[i]) % numsSize;
+
+            if (newIndex < 0) {
+                newIndex += numsSize;
+            }
+
+            result[i] = nums[newIndex];
+        }
     }
-    return res;
+
+    return result;
 }
