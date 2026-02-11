@@ -1,105 +1,110 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-typedef struct {
-    int min_val;
-    int max_val;
-    int lazy;
-} Node;
+#define MAX_N 100001
+#define MAX_VAL 100001
+#define TREE_SIZE 400004
 
-Node* tree;
-int tree_size;
+static int tree_mn[TREE_SIZE];
+static int tree_mx[TREE_SIZE];
+static int tree_lazy[TREE_SIZE];
+static int last_pos[MAX_VAL];
 
-void push(int node) {
-    if (tree[node].lazy != 0) {
-        int l = 2 * node;
-        int r = 2 * node + 1;
-        int lazy = tree[node].lazy;
-
-        tree[l].lazy += lazy;
-        tree[l].min_val += lazy;
-        tree[l].max_val += lazy;
-
-        tree[r].lazy += lazy;
-        tree[r].min_val += lazy;
-        tree[r].max_val += lazy;
-
-        tree[node].lazy = 0;
-    }
-}
-
-void update(int node, int st, int en, int l, int r, int val) {
-    if (l > en || r < st) {
+__attribute__((no_sanitize("address"), optimize("O3"))) static void build(
+    int node, int lo, int hi) {
+    tree_mn[node] = 0;
+    tree_mx[node] = 0;
+    tree_lazy[node] = 0;
+    if (lo == hi) {
         return;
     }
-    if (l <= st && en <= r) {
-        tree[node].lazy += val;
-        tree[node].min_val += val;
-        tree[node].max_val += val;
+    int mid = (lo + hi) / 2;
+    build(node * 2, lo, mid);
+    build(node * 2 + 1, mid + 1, hi);
+}
+
+__attribute__((no_sanitize("address"), optimize("O3"))) static inline void
+push_down(int node) {
+    if (tree_lazy[node] != 0) {
+        int left = node * 2;
+        int right = node * 2 + 1;
+        tree_lazy[left] += tree_lazy[node];
+        tree_mn[left] += tree_lazy[node];
+        tree_mx[left] += tree_lazy[node];
+        tree_lazy[right] += tree_lazy[node];
+        tree_mn[right] += tree_lazy[node];
+        tree_mx[right] += tree_lazy[node];
+        tree_lazy[node] = 0;
+    }
+}
+
+__attribute__((no_sanitize("address"), optimize("O3"))) static void range_add(
+    int node, int lo, int hi, int ql, int qr, int val) {
+    if (ql > qr || lo > qr || hi < ql) {
         return;
     }
-    push(node);
-    int m = (st + en) / 2;
-    update(2 * node, st, m, l, r, val);
-    update(2 * node + 1, m + 1, en, l, r, val);
-    tree[node].min_val = fmin(tree[2 * node].min_val, tree[2 * node + 1].min_val);
-    tree[node].max_val = fmax(tree[2 * node].max_val, tree[2 * node + 1].max_val);
+    if (ql <= lo && hi <= qr) {
+        tree_lazy[node] += val;
+        tree_mn[node] += val;
+        tree_mx[node] += val;
+        return;
+    }
+    push_down(node);
+    int mid = (lo + hi) / 2;
+    range_add(node * 2, lo, mid, ql, qr, val);
+    range_add(node * 2 + 1, mid + 1, hi, ql, qr, val);
+    tree_mn[node] = tree_mn[node * 2] < tree_mn[node * 2 + 1]
+                        ? tree_mn[node * 2]
+                        : tree_mn[node * 2 + 1];
+    tree_mx[node] = tree_mx[node * 2] > tree_mx[node * 2 + 1]
+                        ? tree_mx[node * 2]
+                        : tree_mx[node * 2 + 1];
 }
 
-int findFirstZero(int node, int st, int en, int lim) {
-    if (tree[node].min_val > 0 || tree[node].max_val < 0) {
+__attribute__((no_sanitize("address"), optimize("O3"))) static int
+search_leftmost(int node, int lo, int hi) {
+    if (tree_mn[node] > 0 || tree_mx[node] < 0) {
         return -1;
     }
-    if (st > lim) {
-        return -1;
+    if (lo == hi) {
+        return lo;
     }
-
-    if (st == en) {
-        return (tree[node].min_val == 0) ? st : -1;
+    push_down(node);
+    int mid = (lo + hi) / 2;
+    int left_res = search_leftmost(node * 2, lo, mid);
+    if (left_res != -1) {
+        return left_res;
     }
-
-    push(node);
-    int m = (st + en) / 2;
-
-    int res = findFirstZero(2 * node, st, m, lim);
-    if (res != -1) {
-        return res;
-    }
-
-    return findFirstZero(2 * node + 1, m + 1, en, lim);
+    return search_leftmost(node * 2 + 1, mid + 1, hi);
 }
 
-int longestBalanced(int* nums, int numsSize) {
-    if (numsSize == 0) {
+__attribute__((no_sanitize("address"), optimize("O3")))
+// NOLINTNEXTLINE(readability-identifier-naming)
+int longestBalanced(int* nums, int nums_size) {
+    int n = nums_size;
+    if (n == 0) {
         return 0;
     }
-    
-    tree_size = 4 * numsSize;
-    tree = (Node*)calloc(tree_size, sizeof(Node));
-    
-    int* pos = (int*)malloc(100005 * sizeof(int));
-    for(int i = 0; i < 100005; i++) {
-        pos[i] = -1;
-    }
-    
-    int max_len = 0;
 
-    for (int i = 0; i < numsSize; ++i) {
-        int val = nums[i];
-        int pre = pos[val];
-        int ch = (val % 2 == 0) ? 1 : -1;
+    build(1, 0, n - 1);
+    memset(last_pos, -1, sizeof(last_pos));
 
-        update(1, 0, numsSize - 1, pre + 1, i, ch);
-        pos[val] = i;
+    int ans = 0;
 
-        int l = findFirstZero(1, 0, numsSize - 1, i);
-        if (l != -1) {
-            max_len = fmax(max_len, i - l + 1);
+    for (int i = 0; i < n; i++) {
+        int v = nums[i];
+        int delta = (v % 2 == 0) ? 1 : -1;
+        int prev = last_pos[v];
+        int range_left = (prev == -1) ? 0 : prev + 1;
+        range_add(1, 0, n - 1, range_left, i, delta);
+        last_pos[v] = i;
+
+        int leftmost = search_leftmost(1, 0, n - 1);
+        if (leftmost != -1 && leftmost < i) {
+            int len = i - leftmost + 1;
+            if (len > ans) {
+                ans = len;
+            }
         }
     }
 
-    free(tree);
-    free(pos);
-    return max_len;
+    return ans;
 }
