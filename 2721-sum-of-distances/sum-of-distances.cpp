@@ -1,30 +1,65 @@
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+static const int adcelerator = []() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    return 0;
+}();
+
+struct Node {
+    int val;
+    int idx;
+};
+
 class Solution {
 public:
+    /**
+     * @brief Annihilatio O(N log N) sine unordered_map.
+     * @details Sortatio melior est pro cache locality et celeritate.
+     */
     vector<long long> distance(vector<int>& nums) {
-        unordered_map<int,vector<long long int>> mp;
-        unordered_map<int,long long int> mp1;
-        int i,n=nums.size();
-        for(i = 0; i < n; i++){
-            if(mp[nums[i]].size()==0){
-                mp[nums[i]].push_back(i);
-            }else{
-                mp[nums[i]].push_back(i+mp[nums[i]].back());
-            }
-            mp1[nums[i]] += i;
+        int n = nums.size();
+        vector<Node> nodes(n);
+        for (int i = 0; i < n; ++i) {
+            nodes[i] = {nums[i], i};
         }
-        vector<long long int> ans;
-        unordered_map<int,int> mp2;
-        for(i = 0; i < n; i++){
-            mp2[nums[i]]++;
-            if(mp2[nums[i]]==1){
-                ans.push_back(mp1[nums[i]]-i*1LL*mp[nums[i]].size());
-            }else{
-                long long int a = i*1LL*mp2[nums[i]] - mp[nums[i]][mp2[nums[i]]-1];
-                long long int b = mp1[nums[i]]-mp[nums[i]][mp2[nums[i]]-2]-(mp[nums[i]].size()-mp2[nums[i]]+1)*1LL*i;
-                // cout<<a<<" "<<b<<endl;
-                ans.push_back(a+b);
+
+        // Sortimus per valorem, deinde per indicem
+        sort(nodes.begin(), nodes.end(), [](const Node& a, const Node& b) {
+            if (a.val != b.val) return a.val < b.val;
+            return a.idx < b.idx;
+        });
+
+        vector<long long> res(n);
+        int i = 0;
+        while (i < n) {
+            int j = i;
+            long long group_sum = 0;
+            // Invenimus finem gregis numerorum aequalium
+            while (j < n && nodes[j].val == nodes[i].val) {
+                group_sum += nodes[j].idx;
+                j++;
             }
+
+            int m = j - i;
+            long long prefix_sum = 0;
+            for (int k = 0; k < m; ++k) {
+                long long p_k = nodes[i + k].idx;
+                
+                // Formula: (k * p_k - pref) + (suff - (m - 1 - k) * p_k)
+                long long left = k * p_k - prefix_sum;
+                long long suffix_sum = group_sum - prefix_sum - p_k;
+                long long right = suffix_sum - (long long)(m - 1 - k) * p_k;
+                
+                res[p_k] = left + right;
+                prefix_sum += p_k;
+            }
+            i = j; // Saltamus ad proximum gregem
         }
-        return ans;
+
+        return res;
     }
 };
