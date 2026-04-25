@@ -1,80 +1,74 @@
-#include <stdio.h>
-#include <stdlib.h>
+typedef long long ll;
 
-int cmpLongLong(const void* a, const void* b) {
-    long long valA = *(long long*)a;
-    long long valB = *(long long*)b;
-    if (valA < valB) return -1;
-    else if (valA > valB) return 1;
-    else return 0;
+int cmp_ll(const void* a, const void* b) {
+    ll x = *(const ll*)a;
+    ll y = *(const ll*)b;
+    return x < y ? -1 : x > y;
 }
 
-int canPlace(long long d, int k, int n, long long* ext, long long L) {
-    for (int start = 0; start < n; start++) {
-        int cur = start;
-        long long last = ext[start];
-        int valid = 1;
-        int limit = start + n;
-        for (int step = 1; step < k; step++) {
-            long long target = last + d;
-            int lo = cur + 1, hi = limit;
-            while (lo < hi) {
-                int mid = (lo + hi) / 2;
-                if (ext[mid] < target)
-                    lo = mid + 1;
-                else
-                    hi = mid;
-            }
-            if (lo == limit) {
-                valid = 0;
+int ok(int side, ll* a, int n, int k, int d, ll* b, int* nx) {
+    ll p = 4LL * side;
+
+    for (int i = 0; i < n; ++i) {
+        b[i] = a[i];
+        b[i + n] = a[i] + p;
+    }
+
+    int j = 1;
+    for (int i = 0; i < 2 * n; ++i) {
+        if (j < i + 1)
+            j = i + 1;
+        while (j < 2 * n && b[j] - b[i] < d)
+            ++j;
+        nx[i] = j;
+    }
+
+    for (int i = 0; i < n; ++i) {
+        int x = i;
+        int t = 1;
+        for (; t < k; ++t) {
+            x = nx[x];
+            if (x >= 2 * n)
                 break;
-            }
-            cur = lo;
-            last = ext[cur];
         }
-        if (valid && (ext[start] + L - last >= d))
+        if (t == k && b[x] - b[i] <= p - d)
             return 1;
     }
+
     return 0;
 }
 
 int maxDistance(int side, int** points, int pointsSize, int* pointsColSize, int k) {
-    int n = pointsSize;
-    long long* pos = (long long*) malloc(n * sizeof(long long));
-    for (int i = 0; i < n; i++) {
-        int x = points[i][0], y = points[i][1];
-        long long p;
-        if (y == 0) {
-            p = x;
-        } else if (x == side) {
-            p = side + y;
-        } else if (y == side) {
-            p = 2LL * side + (side - x);
-        } else {
-            p = 3LL * side + (side - y);
-        }
-        pos[i] = p;
-    }
-    qsort(pos, n, sizeof(long long), cmpLongLong);
-    
-    long long L = 4LL * side;
-    int total = n * 2;
-    long long* ext = (long long*) malloc(total * sizeof(long long));
-    for (int i = 0; i < n; i++) {
-        ext[i] = pos[i];
-        ext[i+n] = pos[i] + L;
-    }
-    
-    long long low = 0, high = 2LL * side;
-    while (low < high) {
-        long long mid = (low + high + 1) / 2;
-        if (canPlace(mid, k, n, ext, L))
-            low = mid;
+    ll* a = malloc(sizeof(ll) * pointsSize);
+    ll* b = malloc(sizeof(ll) * pointsSize * 2);
+    int* nx = malloc(sizeof(int) * pointsSize * 2);
+
+    for (int i = 0; i < pointsSize; ++i) {
+        int x = points[i][0];
+        int y = points[i][1];
+        if (y == 0)
+            a[i] = x;
+        else if (x == side)
+            a[i] = (ll)side + y;
+        else if (y == side)
+            a[i] = 3LL * side - x;
         else
-            high = mid - 1;
+            a[i] = 4LL * side - y;
     }
-    
-    free(pos);
-    free(ext);
-    return (int) low;
+
+    qsort(a, pointsSize, sizeof(ll), cmp_ll);
+
+    int l = 0, r = side; 
+    while (l < r) {
+        int m = l + (r - l + 1) / 2;
+        if (ok(side, a, pointsSize, k, m, b, nx))
+            l = m;
+        else
+            r = m - 1;
+    }
+
+    free(a);
+    free(b);
+    free(nx);
+    return l;
 }
