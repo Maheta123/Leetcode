@@ -1,24 +1,36 @@
 class Solution:
     def maxValue(self, nums: List[int]) -> List[int]:
-        n = len(nums)
-        if n == 0: return []
+        N = len(nums)
+        ans = [nums[0]] # prefix
+        for i in range(1, N):
+            ans.append(max(ans[-1], nums[i]))
 
-        suffix_min = [0] * n
-        suffix_min[n - 1] = nums[n - 1]
-        for i in range(n - 2, -1, -1):
-            suffix_min[i] = min(suffix_min[i + 1], nums[i])
+        min_idx = N - 1
+        for i in range(N - 2, -1, -1):
+            if ans[i] > nums[min_idx]:
+                ans[i] = ans[min_idx]
+            if nums[i] < nums[min_idx]:
+                min_idx = i
+        return ans
+            
 
-        res = [0] * n
-        prefix_max = float('-inf')
-        chunk_start = 0
+'''
+2  3  1
+2, 3, 3
 
-        for i in range(n):
-            prefix_max = max(prefix_max, nums[i])
+2 1 | 8 6 | 7 3 2 2 | 11  7 | 14 13
+2 2   8 8   8 8 8 8   11 11   14 14
+                      7   7   13 13 
 
-            if i == n - 1 or prefix_max <= suffix_min[i + 1]:
-                for j in range(chunk_start, i + 1):
-                    res[j] = prefix_max
-                chunk_start = i + 1
-                prefix_max = float('-inf')
+              0, 6
+              2, 8
+              7, 11
 
-        return res
+'''
+
+
+
+
+
+
+        
