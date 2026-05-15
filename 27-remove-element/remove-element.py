@@ -6,8 +6,4 @@ class Solution(object):
         :rtype: int
         """
         while val in nums:
-                nums.remove(val)
-
-
-
-        
+            nums.remove(val)
