@@ -1,24 +1,26 @@
 class Solution {
 public:
-
+    bool isalphanum(char ch){
+        return isalnum(ch);
+    }
     bool isPalindrome(string s) {
-        int l=0,n =s.length()-1;
+        
+        int st = 0 , end = s.length()-1;
+        while(st<end){
+            if(!isalphanum(s[st])){
+                st++; continue;
 
-        while(l <=n){
-                if( !isalnum(s[n])){
-                    n--; continue;
-                }
-                if( !isalnum(s[l])){
-                    l++; continue;
-                }
-                if( tolower(s[l]) != tolower(s[n]) ){
-                        return false;
-                }
+            }
+            if(!isalphanum(s[end])){
+                end--; continue;
+            }
+            if(tolower(s[st])!= tolower(s[end])){
+                return false ;
 
-                l++;
-                n--;
+            }
+            st++;
+            end--;
         }
-
-        return true;
+        return true ;
     }
 };
