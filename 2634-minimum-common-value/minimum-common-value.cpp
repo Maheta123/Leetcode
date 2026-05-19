@@ -1,24 +1,18 @@
 class Solution {
 public:
-    int getCommon(vector<int>& n1, vector<int>& n2) {
-        sort(n1.begin(),n1.end());
-        sort(n2.begin(),n2.end());
-
-        int i=0,j=0;
-
-        while(i < n1.size() && j<n2.size()){
-                if(n1[i] == n2[j]){
-                        return n1[i];
-                }
-                else if(n1[i] < n2[j]){
-                        i++;
-                }else{
-                        j++;
-                }
+    int getCommon(vector<int>& nums1, vector<int>& nums2) {
+        int i = 0, j = 0;
+        while(i<nums1.size() && j<nums2.size()){
+            if(nums1[i]==nums2[j]){
+                return nums1[i];
+            }
+            if(nums1[i]<nums2[j]){
+                i++;
+            }
+            else{
+                j++;
+            }
         }
-
-    return -1;
-
-        
+        return -1;
     }
 };
