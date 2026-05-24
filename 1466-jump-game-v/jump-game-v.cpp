@@ -1,39 +1,46 @@
-class Solution {
-public:
-    int dfs(int i, vector<int>& arr, int d, vector<int>& dp) {
-        if (dp[i] != -1)
-            return dp[i];
-
-        int best = 1;
-        int n = arr.size();
-
-        for (int nxt = i + 1; nxt <= min(n - 1, i + d); nxt++) {
-            if (arr[nxt] >= arr[i])
-                break;
-
-            best = max(best, 1 + dfs(nxt, arr, d, dp));
+class Solution 
+{
+    public:
+    void steps(vector<int>& dp, vector<int>& v, int i, int d)
+    {
+        int n=v.size();
+        if(dp[i]!=-1) return;
+        if((i+1<n&&v[i+1]>=v[i]&&i-1>=0&&v[i-1]>=v[i])||(i==n-1&&v[i-1]>=v[i])||(i==0&&v[i+1]>=v[i]))
+        {
+            dp[i]=0;
+            return;
         }
-
-        for (int nxt = i - 1; nxt >= max(0, i - d); nxt--) {
-            if (arr[nxt] >= arr[i])
-                break;
-
-            best = max(best, 1 + dfs(nxt, arr, d, dp));
+        int ans=0;
+        for(int j=i+1;j<=min(n-1,i+d);j++)
+        {
+            if(v[j]<v[i])
+            {   
+                if(dp[j]==-1) steps(dp,v,j,d);
+                ans=max(ans,dp[j]+1);
+            }
+            else break;
         }
-
-        return dp[i] = best;
+        for(int j=i-1;j>=max(0,i-d);j--)
+        {
+            if(v[j]<v[i])
+            {
+                steps(dp,v,j,d);
+                ans=max(ans,dp[j]+1);
+            }
+            else break;
+        }
+        dp[i]=ans;
+        return;
     }
-
-    int maxJumps(vector<int>& arr, int d) {
-        int n = arr.size();
-        vector<int> dp(n, -1);
-
-        int ans = 1;
-
-        for (int i = 0; i < n; i++) {
-            ans = max(ans, dfs(i, arr, d, dp));
+    int maxJumps(vector<int>& v, int d) 
+    {
+        int n=v.size();
+        if(n==1) return 1;
+        vector<int> dp(n,-1);
+        for(int i=0;i<n;i++)
+        {
+            steps(dp,v,i,d);
         }
-
-        return ans;
+        return *max_element(dp.begin(),dp.end())+1;
     }
 };
