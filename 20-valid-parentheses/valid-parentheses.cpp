@@ -7,13 +7,14 @@ public:
                 if( str[i]=='(' || str[i]=='{' || str[i]=='[' ){
                         st.push(str[i]);
                 }else{
-                         if (st.empty()) {
+                        if(st.empty()){
                                 return false;
-                            }
+                        }
 
-                        if ((st.top() == '(' && str[i] == ')') ||
-                             (st.top() == '[' && str[i] == ']') ||
-                             (st.top() == '{' && str[i] == '}')) {
+                        if( (st.top()== '(' && str[i]== ')') ||
+                            (st.top()== '[' && str[i]== ']') ||
+                            (st.top()== '{' && str[i]== '}')
+                         ){
                                 st.pop();
                         }else{
                                 return false;
