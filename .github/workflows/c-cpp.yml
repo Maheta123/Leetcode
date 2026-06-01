@@ -20,3 +20,9 @@ jobs:
       - name: Compile
         run: |
           g++ -std=c++17 "./Recover Binary Search Tree.cpp" -o test
+      
+      - name: List everything
+        run: |
+          pwd
+          ls -la
+          find .
