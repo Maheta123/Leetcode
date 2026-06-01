@@ -3,6 +3,8 @@ name: C++ CI
 on:
   push:
     branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
   build:
@@ -11,18 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Debug
-        run: |
-          pwd
-          ls -R
-          find . -name "*.cpp"
+      - name: Find CPP files
+        run: find . -name "*.cpp"
 
-      - name: Compile
+      - name: Compile all solutions
         run: |
-          g++ -std=c++17 "./Recover Binary Search Tree.cpp" -o test
-      
-      - name: List everything
-        run: |
-          pwd
-          ls -la
-          find .
+          find . -name "*.cpp" -print0 | while IFS= read -r -d '' file
+          do
+            echo "Compiling $file"
+            g++ -std=c++17 "$file" -o /tmp/test
+          done
