@@ -1,10 +1,7 @@
-
 name: C++ CI
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
     branches: ["main"]
 
 jobs:
@@ -14,9 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show files
-        run: find . -name "*.cpp"
-
-      - name: Compile sample file
+      - name: Debug
         run: |
-          g++ -std=c++17 "Recover Binary Search Tree.cpp" -o test
+          pwd
+          ls -R
+          find . -name "*.cpp"
+
+      - name: Compile
+        run: |
+          g++ -std=c++17 "./Recover Binary Search Tree.cpp" -o test
