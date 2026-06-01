@@ -1,39 +1,31 @@
 name: LeetCode Repository Validation
 
 on:
-push:
-branches: ["main"]
-pull_request:
-branches: ["main"]
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
-validate:
-runs-on: ubuntu-latest
+  validate:
+    runs-on: ubuntu-latest
 
-```
-steps:
-  - name: Checkout Repository
-    uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-  - name: Count Solution Files
-    run: |
-      count=$(find . -name "*.cpp" | wc -l)
-      echo "Found $count C++ solution files"
+      - name: Count CPP Files
+        run: |
+          count=$(find . -name "*.cpp" | wc -l)
+          echo "Found $count cpp files"
 
-      if [ "$count" -eq 0 ]; then
-        echo "No C++ files found!"
-        exit 1
-      fi
+          if [ "$count" -eq 0 ]; then
+            echo "No cpp files found"
+            exit 1
+          fi
 
-  - name: Verify Solution Directories
-    run: |
-      find . -name "*.cpp" | while read file
-      do
-        echo "Checking: $file"
-      done
+      - name: List Solutions
+        run: |
+          find . -name "*.cpp" | sort
 
-  - name: Repository Summary
-    run: |
-      echo "Repository validation completed successfully."
-      echo "All solution files are present."
-```
+      - name: Success
+        run: echo "Repository validation completed successfully"
