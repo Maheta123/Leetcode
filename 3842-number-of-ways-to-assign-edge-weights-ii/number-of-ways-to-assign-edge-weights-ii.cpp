@@ -1,80 +1,115 @@
+const int MX = 100001;
+const int MOD = 1e9 + 7;
+
+long long fac[MX], inv_fac[MX];
+
+void precompute() {
+    if (fac[0] == 1) return;
+    fac[0] = 1;
+    for (int i = 1; i < MX; i++) fac[i] = fac[i-1] * i % MOD;
+    inv_fac[MX-1] = 1;
+    long long base = fac[MX-1], exp = MOD - 2, result = 1, mod = MOD;
+    while (exp > 0) {
+        if (exp & 1) result = result * base % mod;
+        base = base * base % mod;
+        exp >>= 1;
+    }
+    inv_fac[MX-1] = result;
+    for (int i = MX - 2; i >= 0; i--) inv_fac[i] = inv_fac[i+1] * (i+1) % MOD;
+}
+
 class Solution {
+    int n;
+    vector<vector<int>> g;
+    vector<vector<pair<int,int>>> q;
+    vector<int> lca_ans, deep, uf;
+    vector<bool> vis;
+
+    int find(int x) {
+        while (uf[x] != x) {
+            uf[x] = uf[uf[x]];
+            x = uf[x];
+        }
+        return x;
+    }
+
+    void tarjan(int u, int parent) {
+        vis[u] = true;
+        for (int v : g[u]) {
+            if (v == parent) continue;
+            tarjan(v, u);
+            uf[v] = u;
+        }
+        for (auto [node, idx] : q[u]) {
+            if (vis[node]) lca_ans[idx] = find(node);
+        }
+    }
+
+    void dfs(int u, int fa, int d) {
+        deep[u] = d;
+        for (int v : g[u]) {
+            if (v == fa) continue;
+            dfs(v, u, d + 1);
+        }
+    }
+
+    long long power(long long base, long long exp, long long mod) {
+        long long result = 1;
+        base %= mod;
+        while (exp > 0) {
+            if (exp & 1) result = result * base % mod;
+            base = base * base % mod;
+            exp >>= 1;
+        }
+        return result;
+    }
+
 public:
-    vector<int>per,depth;
-    vector<vector<int>>up;
-    int LOG=20;
-    const int MOD=1e9+7;
-    int power(long long a,long long b){
-        long long ans=1;
-        a%=MOD;
-        while(b>0){
-            if(b&1)ans=(ans*a)%MOD;
-            a=(a*a)%MOD;
-            b>>=1;
-        }
-        return (int)ans;
-    }
-
-    int countWays(int d){
-        if(d==0)return 0;
-        return power(2,d-1);
-    }
-
-    void dfs(int node,int p,vector<vector<int>>&adj){
-        per[node]=p;
-        up[node][0]=p;
-        for(int j=1;j<LOG;j++){
-            if(up[node][j-1]!=-1)up[node][j]=up[up[node][j-1]][j-1];
-        }
-        for(auto&it:adj[node]){
-            if(it!=p){
-                depth[it]=depth[node]+1;
-                dfs(it,node,adj);
-            }
-        }
-    }
-
-    int lca(int u,int v){
-        if(depth[u]<depth[v])swap(u,v);
-        int diff=depth[u]-depth[v];
-        for(int j=0;j<LOG;j++){
-            if(diff&(1<<j))
-                u=up[u][j];
-        }
-        if(u==v)
-            return u;
-        for(int j=LOG-1;j>=0;j--){
-            if(up[u][j]!=up[v][j]){
-                u=up[u][j];
-                v=up[v][j];
-            }
-        }
-        return up[u][0];
-    }
-
-    int dist(int u,int v){
-        int L=lca(u,v);
-        int d=depth[u]+depth[v]-2*depth[L];
-        return countWays(d);
-    }
-
     vector<int> assignEdgeWeights(vector<vector<int>>& edges, vector<vector<int>>& queries) {
-        int n=edges.size()+2;
-        vector<vector<int>>adj(n);
-        for(auto&edge:edges){
-            int u=edge[0],v=edge[1];
-            adj[u].push_back(v);
-            adj[v].push_back(u);
+        precompute();
+
+        n = edges.size() + 1;
+        g.assign(n + 1, {});
+        q.assign(n + 1, {});
+        lca_ans.assign(queries.size(), 0);
+        deep.assign(n + 1, 0);
+        uf.resize(n + 1);
+        iota(uf.begin(), uf.end(), 0);
+        vis.assign(n + 1, false);
+
+        for (auto& e : edges) {
+            g[e[0]].push_back(e[1]);
+            g[e[1]].push_back(e[0]);
         }
-        per.resize(n,-1);
-        depth.resize(n,0);
-        up.resize(n,vector<int>(LOG,-1));
-        dfs(1,-1,adj);
-        vector<int>ans;
-        for(auto&q:queries){
-            int u=q[0],v=q[1];
-            ans.push_back(dist(u,v));
+        for (int i = 0; i < (int)queries.size(); i++) {
+            q[queries[i][0]].emplace_back(queries[i][1], i);
+            q[queries[i][1]].emplace_back(queries[i][0], i);
+        }
+
+        tarjan(1, 0);
+        dfs(1, 0, 0);
+
+        vector<int> ans(queries.size());
+        for (int i = 0; i < (int)queries.size(); i++) {
+            int x = deep[queries[i][0]] + deep[queries[i][1]] - 2 * deep[lca_ans[i]];
+            ans[i] = (x == 0) ? 0 : (int)power(2, x - 1, MOD);
         }
         return ans;
     }
 };
+
+static constexpr size_t max_align = alignof(max_align_t);
+alignas(max_align) static unsigned char BUFFER[200 * 1024 * 1024];
+static size_t pos = 0;
+
+void *operator new(const size_t size) {
+    const size_t padding = (max_align - (pos % max_align)) % max_align;
+    pos += padding + size;
+    return static_cast<void *>(&BUFFER[pos - size]);
+}
+
+void *operator new[](const size_t size) { return operator new(size); }
+void operator delete(void *) noexcept {}
+void operator delete[](void *) noexcept {}
+void operator delete(void *, size_t) noexcept {}
+void operator delete[](void *, size_t) noexcept {}
