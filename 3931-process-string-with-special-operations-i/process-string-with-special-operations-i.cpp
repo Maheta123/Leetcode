@@ -1,28 +1,24 @@
 class Solution {
 public:
     string processStr(string s) {
-        string res;
-        int n = s.length();
+        int n = s.size();
+        string ans = "";
+        for(char c : s){
+         if(c >= 'a' && c <= 'z'){
+            ans.push_back(c);
+         }
 
-        for (int i = 0; i < n; i++) {
-            char ch = s[i];
-
-            if (ch == '*') {
-                if (res.length() != 0) {
-                    res.pop_back();
-                }
-            } 
-            else if (ch == '#') {
-                res += res;
-            } 
-            else if (ch == '%') {
-                reverse(res.begin(), res.end());
-            } 
-            else if (ch >= 'a' && ch <= 'z') {
-                res.push_back(ch);
-            }
+         else if(c == '*'){
+            if(!ans.empty()) ans.pop_back();
+         }
+         else if(c=='#'){
+            ans+=ans;
+         }else if(c == '%'){
+            reverse(ans.begin(),ans.end());
+         }
         }
+        return ans;
 
-        return res;
+
     }
 };
