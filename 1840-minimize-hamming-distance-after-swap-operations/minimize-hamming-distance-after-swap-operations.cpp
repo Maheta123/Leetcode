@@ -1,62 +1,36 @@
-constexpr int N=1e5+1;
-int Rt[N], Rk[N]; 
-int freq[N];
-class UnionFind {
-public:
-    UnionFind(int n){
-        iota(Rt, Rt+n, 0);
-        fill(Rk, Rk+n, 0);
-    }
-    int Find(int x) {
-        // compress path
-        return (x == Rt[x])?x:Rt[x]=Find(Rt[x]);
-    }
-    bool Union(int x, int y) {
-        x=Find(x), y=Find(y);
-        if (x==y) return 0;
-        if (Rk[x]>Rk[y]) swap(x, y);
-        Rt[x]=y;
-        if (Rk[x]==Rk[y]) Rk[y]++;
-        return 1;
-    }
-};
-
 class Solution {
 public:
-    static int minimumHammingDistance(vector<int>& source, vector<int>& target, vector<vector<int>>& allowedSwaps) {
-        const int n=source.size();
-        UnionFind G(n);
-        
-        for(auto& sw : allowedSwaps)
-            G.Union(sw[0], sw[1]);
-
-        // Group indices in the same component
-        vector<vector<int>> components(n);
-        for(int i=0; i<n; i++)
-            components[G.Find(i)].push_back(i);
-
-        int match=0;
-        
-        // Process each component
-        for(int i=0;i<n; i++) {
-            if (components[i].empty()) continue;
-
-            // Count freq of source
-            for(int idx : components[i])
-                freq[source[idx]]++;
-
-            // Check how many target values in this component
-            for(int idx : components[i]) {
-                if (freq[target[idx]]>0) {
-                    freq[target[idx]]--;
-                    match++;
-                }
-            }
-
-            // reset freq for the next component
-            for(int idx : components[i]) 
-                freq[source[idx]]=0; 
+    int maxBuilding(int n, vector<vector<int>>& restrictions) {
+        vector<pair<int, int>> R;
+        R.reserve(restrictions.size() + 1);
+        R.emplace_back(1, 0);
+        for (auto &r : restrictions) R.emplace_back(r[0], r[1]);
+        sort(R.begin(), R.end());
+        const int N = R.size();
+        // find the real restrictions, first forward, than backward.
+        for (int i = 0; i < N - 1; i++) {
+            R[i+1].second = min(R[i+1].second, R[i].second + (R[i+1].first - R[i].first));
         }
-        return n-match;
+        for (int i = N - 1; i >= 1; i--) {
+            R[i-1].second = min(R[i-1].second, R[i].second + (R[i].first - R[i-1].first));
+        }
+
+        // what is the largest building at the end?
+        int ans = R.back().second + (n - R.back().first);
+
+        // now all the in-betweens
+
+        for (int i = 0; i < N - 1; i++) {
+            //(x1, y1), (x2, y2)
+            // y1 + (x - x1) = y2 + (x2 - x)
+            // x = (y2 + x2 - y1 + x1) / 2 -- needs long long
+            long long x1 = R[i].first, y1 = R[i].second;
+            long long x2 = R[i+1].first, y2 = R[i+1].second;
+
+            long long x = (y2 + x2 - y1 + x1) / 2;
+
+            ans = max(ans, (int)(y1 + (x - x1)));
+        }
+        return ans;
     }
 };
